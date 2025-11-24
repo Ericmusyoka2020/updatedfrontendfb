@@ -19,7 +19,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-    button {
+    button, .whatsapp-btn {
       padding: 12px;
       width: 100%;
       background: #4267B2;
@@ -28,8 +28,21 @@
       font-size: 16px;
       border-radius: 5px;
       cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
     }
     button:hover { background: #365899; }
+
+    /* WhatsApp button style */
+    .whatsapp-btn {
+      background: #25D366;
+      margin-top: 15px;
+    }
+    .whatsapp-btn:hover {
+      background: #1ebe5d;
+    }
+
     a { color: #4267B2; }
     #success {
       color: green;
@@ -57,6 +70,11 @@
   <textarea name="message" rows="6" placeholder="Your Message" required></textarea>
   <button type="submit">Send Message</button>
 </form>
+
+<!-- ✅ WhatsApp Button -->
+<a class="whatsapp-btn" href="https://wa.me/254756225185" target="_blank">
+  Chat on WhatsApp
+</a>
 
 <p id="success">✔ Your message has been sent successfully!</p>
 <p id="error">❌ There was an error sending your message. Try again.</p>
