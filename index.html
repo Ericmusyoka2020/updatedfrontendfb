@@ -2,34 +2,213 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HilltopAds Verification</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>FBGrab</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f2f2f2;
+  }
+  input, button {
+    padding: 14px;
+    margin: 10px auto;
+    display: block;
+    font-size: 16px;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background: #4267B2;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background: #365899;
+  }
+  #logo {
+    margin: 20px auto;
+    max-width: 150px;
+    display: block;
+  }
+  #result {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 700px;
+    margin: 20px auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    text-align: left;
+    display: none;
+  }
+  video, audio {
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  .loader {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #4267B2;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin: 20px auto;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
 
-  <!-- HilltopAds verification meta tag -->
-  
-
-  <!-- Prevent caching issues -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
+  /* Fullscreen Ad Overlay */
+  #fullAdOverlay {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    z-index:999999;
+    text-align:center;
+    padding:20px;
+  }
+  #fullAdOverlay #adBox {
+    width:90%;
+    max-width:400px;
+  }
+  #fullAdOverlay #skipBtn {
+    margin-top:25px;
+    padding:12px 25px;
+    background:#fff;
+    color:#000;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    display:none;
+    cursor:pointer;
+  }
+  #fullAdOverlay .adCountdown {
+    color:white;
+    margin-top:20px;
+    font-size:22px;
+  }
+</style>
 </head>
 <body>
-  <h1>Welcome to My Site!</h1>
-  <p>The HilltopAds meta verification tag is included and should be detected.</p>
-</body>
-  <script>
-(function(kcgk){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = kcgk || {};
-s.src = "\/\/excitableminor.com\/b\/XwVpsMd.GClW0vY\/Wack\/JelmP9\/uGZKUqlUkcPjT\/Yy3LM\/T\/gv4CM\/zQgytKNXjiczxoOQD\/gNzLO\/QU";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-</html>
 
+<h1>FBGrab</h1> 
+<div>
+  <a href="use.html"><button>How to use this site ?</button></a>
+</div>
+
+<input type="text" id="videoUrl" placeholder="Paste Facebook video URL here">
+<button onclick="fetchVideo()">Open Link</button>
+
+<div id="result"></div>
+
+<img id="logo" src="b81f7e1c-f4f6-437d-9f43-dd062af6ce40.jpg" alt="Logo">
+
+<a href="cont.html"><button>Contact Me</button></a>
+
+<!-- Fullscreen Ad Overlay -->
+<div id="fullAdOverlay">
+  <div id="adBox"></div>
+  <div class="adCountdown">
+    Please wait <span id="fullCount">4</span>s
+  </div>
+  <button id="skipBtn" onclick="closeAd()">Skip Ad</button>
+</div>
+
+<script>
+const backendUrl = "https://fb-br2r.onrender.com"; // your backend
+
+async function fetchVideo() {
+  const url = document.getElementById("videoUrl").value;
+  const result = document.getElementById("result");
+
+  if (!url.trim()) { alert("Please paste a Facebook video URL!"); return; }
+
+  result.style.display = "block";
+  result.innerHTML = '<div class="loader"></div><p>Fetching video…</p>';
+
+  try {
+    const response = await fetch(`${backendUrl}/download?url=${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error("Backend error");
+    const data = await response.json();
+
+    const videoFormat = data.formats.find(f => f.ext === "mp4") || data.formats[0];
+    const audioFormat = data.formats.find(f => f.ext === "m4a") || data.formats[0];
+
+    await Promise.all([
+      fetch(videoFormat.url, { method: "HEAD" }),
+      fetch(audioFormat.url, { method: "HEAD" })
+    ]);
+
+    result.innerHTML = `
+      <h2>${data.title}</h2>
+      <p><strong>Uploader:</strong> ${data.uploader}</p>
+      <p><strong>Duration:</strong> ${data.duration} seconds</p>
+
+      <h3>Video Preview</h3>
+      <video controls preload="auto" playsinline src="${videoFormat.url}"></video>
+
+      <h3>Audio Preview</h3>
+      <audio controls preload="auto" src="${audioFormat.url}"></audio>
+
+      <button onclick="startDownload('${videoFormat.url}')">Download Video</button>
+    `;
+  } catch (err) {
+    result.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+  }
+}
+
+// Start download + show fullscreen ad
+function startDownload(downloadUrl) {
+  // Start download immediately
+  window.location.href = downloadUrl;
+
+  // Show overlay
+  const overlay = document.getElementById("fullAdOverlay");
+  overlay.style.display = "flex";
+
+  // Dynamically load Adsterra script
+  const adBox = document.getElementById("adBox");
+  adBox.innerHTML = '';
+  const s = document.createElement('script');
+  s.src = "//excitableminor.com/b/XwVpsMd.GClW0vY/Wack/JelmP9/uGZKUqlUkcPjT/Yy3LM/T/gv4CM/zQgytKNXjiczxoOQD/gNzLO/QU";
+  s.async = true;
+  s.referrerPolicy = 'no-referrer-when-downgrade';
+  adBox.appendChild(s);
+
+  // Countdown for skip button
+  const skipBtn = document.getElementById("skipBtn");
+  const countdown = document.getElementById("fullCount");
+  let timeLeft = 4;
+  countdown.innerHTML = timeLeft;
+
+  const timer = setInterval(() => {
+    timeLeft--;
+    countdown.innerHTML = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      skipBtn.style.display = "block";
+    }
+  }, 1000);
+}
+
+function closeAd() {
+  document.getElementById("fullAdOverlay").style.display = "none";
+}
+</script>
+
+<footer>&copy; 2025 FBGrab. All rights reserved.</footer>
+</body>
+</html>
