@@ -1,24 +1,11 @@
 
-
-
-   
-
 <!DOCTYPE html>
 <html lang="en">
-	<meta name="monetag" content="fec95f84b1a4577d35a64c01ee5480e0">
-	
 <head>
-	
-
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-	<!-- ✅ PUT FAVICON HERE (TOP OF HEAD) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FBGrab - Preview</title>
   <link rel="icon" href="favicon.ico" type="image/x-icon">
-  <title>FBGrab</title>
-
-
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -28,7 +15,6 @@
       text-align: center;
     }
 
-    /* MOBILE RESPONSIVE CONTAINER */
     .container {
       max-width: 600px;
       margin: auto;
@@ -38,11 +24,8 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.12);
     }
 
-    /* LOGO */
     #logo {
       width: 120px;
-      margin: auto;
-      display: block;
       margin-bottom: 15px;
       border-radius: 8px;
     }
@@ -66,155 +49,121 @@
     }
     button:hover { background: #365899; }
 
-    /* RESULT BOX */
-    #result {
-      margin-top: 20px;
+    #loader {
       display: none;
-      text-align: center;
-    }
-
-    video, audio {
-      width: 100%;
-      border-radius: 10px;
-      margin-top: 15px;
-    }
-
-    /* LOADER */
-    .loader {
+      margin: 20px auto;
       border: 6px solid #eee;
       border-top: 6px solid #4267B2;
       border-radius: 50%;
       width: 40px;
       height: 40px;
-      margin: auto;
       animation: spin .8s linear infinite;
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
 
-    /* BUTTON ROW */
-    .btn-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 15px;
-    }
+    #result { margin-top: 20px; text-align: center; }
+    video, audio { width: 100%; margin-top: 10px; border-radius: 10px; }
 
-    .btn-small {
-      flex: 1;
-      padding: 12px;
-      font-size: 15px;
-      background: #333;
-    }
-
-    @media (max-width: 480px) {
-      .btn-row { flex-direction: column; }
-      .btn-small { width: 100%; }
-    }
+    .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-row button { flex: 1; padding: 12px; font-size: 15px; }
+    @media (max-width:480px){.btn-row{flex-direction:column;}}
   </style>
-
 </head>
-
 <body>
+  <div class="container">
+    <img src="logo.png" id="logo" alt="FBGrab Logo">
 
+    <input type="text" id="videoUrl" placeholder="Paste Facebook video link here">
+    <button onclick="previewVideo()">Preview</button>
 
-  <!-- LOGO -->
-  <img src="b81f7e1c-f4f6-437d-9f43-dd062af6ce40.jpg" id="logo" />
-
-  <h2>FBGrab</h2>
-
-  <input type="text" id="videoUrl" placeholder="Paste Facebook video link here">
-
-  <button onclick="fetchVideo()">Open Link</button>
-
-  <!-- BUTTONS BELOW INPUT -->
-  
-
-  <!-- VIDEO + AUDIO RESULT -->
-  <div id="result"></div>
-
-</div>
-	
-
-<script>(function(s){s.dataset.zone='10273722',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-
-
-
+    
+    <div id="loader"></div>
+    <div id="result"></div>
+  </div>
 
 <script>
-  const backendUrl = "https://fb-br2r.onrender.com";
+const backendUrl = "https://fb-br2r.onrender.com"; // replace with your backend
+let preloadedData = null;
 
-  async function fetchVideo() {
-    const url = document.getElementById("videoUrl").value.trim();
-    const result = document.getElementById("result");
+// Silent wake-up backend on page load
+window.addEventListener("load", () => {
+  fetch(`${backendUrl}/health`).catch(() => {}); // silent ping
+});
 
-    if (!url) {
-      alert("Please paste a Facebook video URL!");
+// Preload video and audio silently
+async function preloadVideo(url) {
+  try {
+    const response = await fetch(`${backendUrl}/download?url=${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error("Failed to fetch video");
+
+    const data = await response.json();
+
+    const video = data.formats
+      .filter(f => f.vcodec !== "none" && f.ext === "mp4")
+      .sort((a,b) => (b.height||0) - (a.height||0))[0];
+
+    const audio = data.formats
+      .filter(f => f.acodec !== "none" && (f.ext==='m4a'||f.ext==='mp4'))
+      .sort((a,b) => b.filesize - a.filesize)[0];
+
+    if (!video || !audio) return null;
+
+    // Store preloaded data
+    preloadedData = { video, audio };
+
+    // Preload using hidden video/audio elements
+    const hiddenVideo = document.createElement("video");
+    hiddenVideo.src = video.url;
+    hiddenVideo.preload = "auto";
+    hiddenVideo.style.display = "none";
+    document.body.appendChild(hiddenVideo);
+
+    const hiddenAudio = document.createElement("audio");
+    hiddenAudio.src = audio.url;
+    hiddenAudio.preload = "auto";
+    hiddenAudio.style.display = "none";
+    document.body.appendChild(hiddenAudio);
+
+    return preloadedData;
+  } catch {
+    return null;
+  }
+}
+
+// Preview video and audio
+async function previewVideo() {
+  const url = document.getElementById("videoUrl").value.trim();
+  if (!url) { alert("Please paste a Facebook video URL!"); return; }
+
+  document.getElementById("loader").style.display = "block";
+
+  // Preload if not already done or if URL changed
+  if (!preloadedData || preloadedData.inputUrl !== url) {
+    preloadedData = await preloadVideo(url);
+    if (!preloadedData) {
+      document.getElementById("result").innerHTML = `<p style="color:red;">Failed to load video/audio</p>`;
+      document.getElementById("loader").style.display = "none";
       return;
     }
-
-    result.style.display = "block";
-    result.innerHTML = `
-      <div class="loader"></div>
-      <p>Fetching fastest links…</p>
-    `;
-
-    try {
-      const response = await fetch(`${backendUrl}/download?url=${encodeURIComponent(url)}`);
-      if (!response.ok) throw new Error("Failed to load");
-
-      const data = await response.json();
-
-      const video = data.formats.find(f =>
-        f.vcodec !== "none" && f.ext === "mp4"
-      ) || data.formats.find(f => f.vcodec !== "none");
-
-      const audio = data.formats.find(f =>
-        f.acodec !== "none" && (f.ext === "m4a" || f.ext === "mp4")
-      ) || data.formats.find(f => f.acodec !== "none");
-
-      if (!video) {
-        result.innerHTML = "<p style='color:red;'>Video not available.</p>";
-        return;
-      }
-
-      if (!audio) {
-        result.innerHTML = "<p style='color:red;'>Audio not found.</p>";
-        return;
-      }
-
-      // SPEED WARM-UP
-      await Promise.all([
-        fetch(video.url, { method: "HEAD" }),
-        fetch(audio.url, { method: "HEAD" })
-      ]);
-
-      result.innerHTML = `
-        <video controls preload="auto" playsinline src="${video.url}"></video>
-
-        <h3>Audio Only</h3>
-        <audio controls preload="auto" src="${audio.url}"></audio>
-      `;
-    } catch (e) {
-      result.innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
-    }
+    preloadedData.inputUrl = url;
   }
-</script><script>(function(s){s.dataset.zone='10271492',s.src='https://groleegni.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-  
-	<div class="btn-row">
-    <a href="use.html"><button class="btn-small">How to Use FBGrab?</button></a>
-    <a href="cont.html"><button class="btn-small">Contact Me</button></a>
-  </div>
-	
-	<script>(function(s){s.dataset.zone='10273697',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 
-<script src="https://3nbf4.com/act/files/tag.min.js?z=10273740" data-cfasync="false" async></script>
-	
-  
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("result").innerHTML = `
+    <video controls preload="auto" playsinline src="${preloadedData.video.url}"></video>
+    <h4>Audio Only</h4>
+    <audio controls preload="auto" src="${preloadedData.audio.url}"></audio>
+  `;
+}
+</script>
 
-
-	<footer style="margin-top:20px; font-size:14px; color:#666;">
-  © 2025 FBGrab. All rights reserved.
+<footer style="margin-top:30px; padding:15px 0; font-size:14px; color:#666; text-align:center; border-top:1px solid #ddd;">
+  © 2025 FBGrab. All rights reserved. | 
+  <a href="use.html" style="color:#4267B2; text-decoration:none;">How to Use</a> | 
+  <a href="cont.html" style="color:#4267B2; text-decoration:none;">Contact Me</a>
 </footer>
+	<script src="https://3nbf4.com/act/files/tag.min.js?z=10273741" data-cfasync="false" async></script>
 	
+
 </body>
 </html>
