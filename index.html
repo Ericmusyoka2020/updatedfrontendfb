@@ -216,6 +216,243 @@ async function previewVideo() {
   `;
 }
 </script>
+
+
+
+<script>
+(function () {
+
+  const WIDTH = 300;
+  const HEIGHT = 50;
+
+  const images = [
+    "https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=300&h=50",
+    "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=300&h=50",
+    "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=300&h=50"
+  ];
+
+  /* ---------- CSS ---------- */
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @keyframes bgFade {
+      0% { background-image: url(${images[0]}); }
+      33% { background-image: url(${images[1]}); }
+      66% { background-image: url(${images[2]}); }
+      100% { background-image: url(${images[0]}); }
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #ff5252; }
+      to { box-shadow: 0 0 22px gold; }
+    }
+
+    #festive-ad {
+      width: ${WIDTH}px;
+      height: ${HEIGHT}px;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      background-size: cover;
+      background-position: center;
+      animation: bgFade 20s infinite ease-in-out, glow 2s infinite alternate;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        rgba(183,28,28,0.65),
+        rgba(110,0,0,0.65)
+      );
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px #000;
+      z-index: 5;
+      line-height: 1.1;
+    }
+
+    #countdown {
+      font-size: 8.5px;
+      color: gold;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+  `;
+  document.head.appendChild(style);
+
+  /* ---------- HTML ---------- */
+  const ad = document.createElement("div");
+  ad.id = "festive-ad";
+  ad.innerHTML = `
+    <canvas id="decor"></canvas>
+    <canvas id="snow"></canvas>
+    <canvas id="fireworks"></canvas>
+    <div id="overlay">
+      🎄 Grubhub wishes you Merry Christmas
+      <div id="countdown"></div>
+      <span style="font-size:8px;font-weight:normal;">— CEO Eric</span>
+    </div>
+  `;
+  document.body.appendChild(ad);
+
+  /* ---------- COUNTDOWN ---------- */
+  const countdownEl = ad.querySelector("#countdown");
+  const newYear = new Date(new Date().getFullYear() + 1, 0, 1);
+
+  setInterval(() => {
+    const diff = newYear - new Date();
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor(diff / 3600000) % 24;
+    const m = Math.floor(diff / 60000) % 60;
+    const s = Math.floor(diff / 1000) % 60;
+    countdownEl.textContent = `🎆 ${d}d ${h}h ${m}m ${s}s to New Year`;
+  }, 1000);
+
+  /* ---------- DECOR (TREES + FLOWERS) ---------- */
+  const decorCanvas = ad.querySelector("#decor");
+  const decorCtx = decorCanvas.getContext("2d");
+  decorCanvas.width = WIDTH;
+  decorCanvas.height = HEIGHT;
+
+  let decor = [];
+
+  function addDecor() {
+    decor.push({
+      x: Math.random() * WIDTH,
+      y: HEIGHT + 5,
+      type: Math.random() > 0.5 ? "tree" : "flower",
+      size: Math.random() * 4 + 3,
+      speed: Math.random() * 0.2 + 0.1,
+      alpha: 0
+    });
+  }
+
+  function drawDecor() {
+    decorCtx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    if (Math.random() < 0.05) addDecor();
+
+    decor.forEach((d, i) => {
+      decorCtx.globalAlpha = Math.min(d.alpha += 0.01, 1);
+      decorCtx.fillStyle = d.type === "tree" ? "#2e7d32" : "#c62828";
+
+      if (d.type === "tree") {
+        // Tree (triangle)
+        decorCtx.beginPath();
+        decorCtx.moveTo(d.x, d.y - d.size);
+        decorCtx.lineTo(d.x - d.size, d.y + d.size);
+        decorCtx.lineTo(d.x + d.size, d.y + d.size);
+        decorCtx.closePath();
+        decorCtx.fill();
+      } else {
+        // Flower (circle)
+        decorCtx.beginPath();
+        decorCtx.arc(d.x, d.y, d.size / 2, 0, Math.PI * 2);
+        decorCtx.fill();
+      }
+
+      d.y -= d.speed;
+      if (d.y < -10) decor.splice(i, 1);
+    });
+
+    decorCtx.globalAlpha = 1;
+    requestAnimationFrame(drawDecor);
+  }
+  drawDecor();
+
+  /* ---------- SNOW ---------- */
+  const snowCanvas = ad.querySelector("#snow");
+  const snowCtx = snowCanvas.getContext("2d");
+  snowCanvas.width = WIDTH;
+  snowCanvas.height = HEIGHT;
+
+  let snowflakes = Array.from({ length: 18 }, () => ({
+    x: Math.random() * WIDTH,
+    y: Math.random() * HEIGHT,
+    r: Math.random() * 1.5 + 0.5,
+    d: Math.random() + 0.5
+  }));
+
+  function animateSnow() {
+    snowCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    snowCtx.fillStyle = "white";
+
+    snowflakes.forEach(f => {
+      snowCtx.beginPath();
+      snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      snowCtx.fill();
+      f.y += f.d;
+      if (f.y > HEIGHT) {
+        f.y = 0;
+        f.x = Math.random() * WIDTH;
+      }
+    });
+    requestAnimationFrame(animateSnow);
+  }
+  animateSnow();
+
+  /* ---------- FIREWORKS ---------- */
+  const fireCanvas = ad.querySelector("#fireworks");
+  const fireCtx = fireCanvas.getContext("2d");
+  fireCanvas.width = WIDTH;
+  fireCanvas.height = HEIGHT;
+
+  let particles = [];
+
+  function firework() {
+    const x = Math.random() * WIDTH;
+    const y = Math.random() * HEIGHT;
+    const colors = ["gold", "red", "orange", "white"];
+    const color = colors[Math.floor(Math.random() * colors.length)];
+
+    for (let i = 0; i < 8; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 1.4,
+        vy: (Math.random() - 0.5) * 1.4,
+        life: 25,
+        color
+      });
+    }
+  }
+
+  function animateFireworks() {
+    fireCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    if (Math.random() < 0.05) firework();
+
+    particles.forEach((p, i) => {
+      fireCtx.globalAlpha = p.life / 25;
+      fireCtx.fillStyle = p.color;
+      fireCtx.fillRect(p.x, p.y, 2, 2);
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    });
+
+    fireCtx.globalAlpha = 1;
+    requestAnimationFrame(animateFireworks);
+  }
+  animateFireworks();
+
+})();
+</script>
+
+		
 		<div>
 			<script type="text/javascript">
   atOptions = {
