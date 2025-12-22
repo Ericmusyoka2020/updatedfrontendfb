@@ -222,7 +222,6 @@ async function previewVideo() {
 <script>
 (function () {
 
-  const WIDTH = 300;
   const HEIGHT = 50;
 
   const images = [
@@ -247,13 +246,13 @@ async function previewVideo() {
     }
 
     #festive-ad {
-      width: ${WIDTH}px;
+      width: 90%;          /* responsive width */
+      max-width: 400px;    /* optional max width */
+      min-width: 200px;    /* optional min width */
       height: ${HEIGHT}px;
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 99999;
+      position: relative;
+      margin: 20px auto;
+      z-index: 10;
       background-size: cover;
       background-position: center;
       animation: bgFade 20s infinite ease-in-out, glow 2s infinite alternate;
@@ -273,7 +272,7 @@ async function previewVideo() {
       align-items: center;
       justify-content: center;
       font-family: Arial, sans-serif;
-      font-size: 10px;
+      font-size: clamp(8px, 1vw, 12px); /* responsive font */
       font-weight: bold;
       color: white;
       text-shadow: 1px 1px 3px #000;
@@ -282,13 +281,15 @@ async function previewVideo() {
     }
 
     #countdown {
-      font-size: 8.5px;
+      font-size: clamp(7px, 0.8vw, 10px);
       color: gold;
     }
 
     canvas {
       position: absolute;
       inset: 0;
+      width: 100%;
+      height: 100%;
       z-index: 2;
     }
   `;
@@ -302,12 +303,15 @@ async function previewVideo() {
     <canvas id="snow"></canvas>
     <canvas id="fireworks"></canvas>
     <div id="overlay">
-      🎄 Grubhub wishes you Merry Christmas and happy New Year
+      🎄 Grubhub wishes you Merry Christmas and Happy New Year 2026 🎄🎁
       <div id="countdown"></div>
       <span style="font-size:8px;font-weight:normal;">— CEO Eric Thyaka</span>
     </div>
   `;
-  document.body.appendChild(ad);
+
+  // Insert ad exactly where script is placed
+  const scriptTag = document.currentScript;
+  scriptTag.parentNode.insertBefore(ad, scriptTag);
 
   /* ---------- COUNTDOWN ---------- */
   const countdownEl = ad.querySelector("#countdown");
@@ -322,18 +326,33 @@ async function previewVideo() {
     countdownEl.textContent = `🎆 ${d}d ${h}h ${m}m ${s}s to New Year`;
   }, 1000);
 
-  /* ---------- DECOR (TREES + FLOWERS) ---------- */
+  /* ---------- CANVAS CONTEXTS ---------- */
   const decorCanvas = ad.querySelector("#decor");
-  const decorCtx = decorCanvas.getContext("2d");
-  decorCanvas.width = WIDTH;
-  decorCanvas.height = HEIGHT;
+  const snowCanvas = ad.querySelector("#snow");
+  const fireCanvas = ad.querySelector("#fireworks");
 
+  function resizeCanvas(canvas) {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+  }
+
+  function resizeAll() {
+    resizeCanvas(decorCanvas);
+    resizeCanvas(snowCanvas);
+    resizeCanvas(fireCanvas);
+  }
+
+  window.addEventListener("resize", resizeAll);
+  resizeAll();
+
+  /* ---------- DECOR (TREES + FLOWERS) ---------- */
+  const decorCtx = decorCanvas.getContext("2d");
   let decor = [];
 
   function addDecor() {
     decor.push({
-      x: Math.random() * WIDTH,
-      y: HEIGHT + 5,
+      x: Math.random() * decorCanvas.width,
+      y: decorCanvas.height + 5,
       type: Math.random() > 0.5 ? "tree" : "flower",
       size: Math.random() * 4 + 3,
       speed: Math.random() * 0.2 + 0.1,
@@ -342,7 +361,7 @@ async function previewVideo() {
   }
 
   function drawDecor() {
-    decorCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    decorCtx.clearRect(0, 0, decorCanvas.width, decorCanvas.height);
 
     if (Math.random() < 0.05) addDecor();
 
@@ -351,7 +370,6 @@ async function previewVideo() {
       decorCtx.fillStyle = d.type === "tree" ? "#2e7d32" : "#c62828";
 
       if (d.type === "tree") {
-        // Tree (triangle)
         decorCtx.beginPath();
         decorCtx.moveTo(d.x, d.y - d.size);
         decorCtx.lineTo(d.x - d.size, d.y + d.size);
@@ -359,7 +377,6 @@ async function previewVideo() {
         decorCtx.closePath();
         decorCtx.fill();
       } else {
-        // Flower (circle)
         decorCtx.beginPath();
         decorCtx.arc(d.x, d.y, d.size / 2, 0, Math.PI * 2);
         decorCtx.fill();
@@ -375,20 +392,17 @@ async function previewVideo() {
   drawDecor();
 
   /* ---------- SNOW ---------- */
-  const snowCanvas = ad.querySelector("#snow");
   const snowCtx = snowCanvas.getContext("2d");
-  snowCanvas.width = WIDTH;
-  snowCanvas.height = HEIGHT;
 
   let snowflakes = Array.from({ length: 18 }, () => ({
-    x: Math.random() * WIDTH,
-    y: Math.random() * HEIGHT,
+    x: Math.random() * snowCanvas.width,
+    y: Math.random() * snowCanvas.height,
     r: Math.random() * 1.5 + 0.5,
     d: Math.random() + 0.5
   }));
 
   function animateSnow() {
-    snowCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
     snowCtx.fillStyle = "white";
 
     snowflakes.forEach(f => {
@@ -396,9 +410,9 @@ async function previewVideo() {
       snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
       snowCtx.fill();
       f.y += f.d;
-      if (f.y > HEIGHT) {
+      if (f.y > snowCanvas.height) {
         f.y = 0;
-        f.x = Math.random() * WIDTH;
+        f.x = Math.random() * snowCanvas.width;
       }
     });
     requestAnimationFrame(animateSnow);
@@ -406,16 +420,12 @@ async function previewVideo() {
   animateSnow();
 
   /* ---------- FIREWORKS ---------- */
-  const fireCanvas = ad.querySelector("#fireworks");
   const fireCtx = fireCanvas.getContext("2d");
-  fireCanvas.width = WIDTH;
-  fireCanvas.height = HEIGHT;
-
   let particles = [];
 
   function firework() {
-    const x = Math.random() * WIDTH;
-    const y = Math.random() * HEIGHT;
+    const x = Math.random() * fireCanvas.width;
+    const y = Math.random() * fireCanvas.height;
     const colors = ["gold", "red", "orange", "white"];
     const color = colors[Math.floor(Math.random() * colors.length)];
 
@@ -431,7 +441,7 @@ async function previewVideo() {
   }
 
   function animateFireworks() {
-    fireCtx.clearRect(0, 0, WIDTH, HEIGHT);
+    fireCtx.clearRect(0, 0, fireCanvas.width, fireCanvas.height);
     if (Math.random() < 0.05) firework();
 
     particles.forEach((p, i) => {
@@ -451,6 +461,7 @@ async function previewVideo() {
 
 })();
 </script>
+
 
 		
 		<div>
