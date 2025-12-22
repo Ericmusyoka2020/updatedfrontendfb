@@ -126,99 +126,7 @@
     <img src="https://raw.githubusercontent.com/ericmusyoka2020/frontendfbinst/main/logo.png
 " id="logo" alt="FBGrab Logo">
 
-    <input type="text" id="videoUrl" placeholder="Paste🌍Facebook/instagram video link here">
-    <button onclick="previewVideo()">Open Link</button>
 	
-	
-<a href="use.html" style="color:#4267B2; text-decoration:none;">How to Use</a> | 
-  <a href="cont.html" style="color:#4267B2; text-decoration:none;">Contact Us</a>
-		
-    
-    <div id="loader"></div>
-    <div id="result"></div>
-  </div>
-	
-	
-		<script>(function(s){s.dataset.zone='10273697',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-
-<script>(function(s){s.dataset.zone='10273722',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-		<script>const backendUrl = "https://fb-br2r.onrender.com"; // replace with your backend
-let preloadedData = null;
-
-// Silent wake-up backend on page load
-window.addEventListener("load", () => {
-  fetch(`${backendUrl}/health`).catch(() => {}); // silent ping
-});
-
-// Preload video and audio silently
-async function preloadVideo(url) {
-  try {
-    const response = await fetch(`${backendUrl}/download?url=${encodeURIComponent(url)}`);
-    if (!response.ok) throw new Error("Failed to fetch video");
-
-    const data = await response.json();
-
-    const video = data.formats
-      .filter(f => f.vcodec !== "none" && f.ext === "mp4")
-      .sort((a,b) => (b.height||0) - (a.height||0))[0];
-
-    const audio = data.formats
-      .filter(f => f.acodec !== "none" && (f.ext==='m4a'||f.ext==='mp4'))
-      .sort((a,b) => b.filesize - a.filesize)[0];
-
-    if (!video || !audio) return null;
-
-    // Store preloaded data
-    preloadedData = { video, audio };
-
-    // Preload using hidden video/audio elements
-    const hiddenVideo = document.createElement("video");
-    hiddenVideo.src = video.url;
-    hiddenVideo.preload = "auto";
-    hiddenVideo.style.display = "none";
-    document.body.appendChild(hiddenVideo);
-
-    const hiddenAudio = document.createElement("audio");
-    hiddenAudio.src = audio.url;
-    hiddenAudio.preload = "auto";
-    hiddenAudio.style.display = "none";
-    document.body.appendChild(hiddenAudio);
-
-    return preloadedData;
-  } catch {
-    return null;
-  }
-}
-
-// Preview video and audio
-async function previewVideo() {
-  const url = document.getElementById("videoUrl").value.trim();
-  if (!url) { alert("Please paste a Facebook video URL!"); return; }
-
-  document.getElementById("loader").style.display = "block";
-
-  // Preload if not already done or if URL changed
-  if (!preloadedData || preloadedData.inputUrl !== url) {
-    preloadedData = await preloadVideo(url);
-    if (!preloadedData) {
-      document.getElementById("result").innerHTML = `<p style="color:red;">Failed to load video/audio</p>`;
-      document.getElementById("loader").style.display = "none";
-      return;
-    }
-    preloadedData.inputUrl = url;
-  }
-
-  document.getElementById("loader").style.display = "none";
-  document.getElementById("result").innerHTML = `
-    <video controls preload="auto" playsinline src="${preloadedData.video.url}"></video>
-    <h4>Audio Only</h4>
-    <audio controls preload="auto" src="${preloadedData.audio.url}"></audio>
-  `;
-}
-</script>
-
-
-
 <script>
 (function () {
 
@@ -461,6 +369,100 @@ async function previewVideo() {
 
 })();
 </script>
+    <input type="text" id="videoUrl" placeholder="Paste🌍Facebook/instagram video link here">
+    <button onclick="previewVideo()">Open Link</button>
+	
+	
+<a href="use.html" style="color:#4267B2; text-decoration:none;">How to Use</a> | 
+  <a href="cont.html" style="color:#4267B2; text-decoration:none;">Contact Us</a>
+		
+    
+    <div id="loader"></div>
+    <div id="result"></div>
+  </div>
+	
+	
+		<script>(function(s){s.dataset.zone='10273697',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+
+<script>(function(s){s.dataset.zone='10273722',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+		<script>const backendUrl = "https://fb-br2r.onrender.com"; // replace with your backend
+let preloadedData = null;
+
+// Silent wake-up backend on page load
+window.addEventListener("load", () => {
+  fetch(`${backendUrl}/health`).catch(() => {}); // silent ping
+});
+
+// Preload video and audio silently
+async function preloadVideo(url) {
+  try {
+    const response = await fetch(`${backendUrl}/download?url=${encodeURIComponent(url)}`);
+    if (!response.ok) throw new Error("Failed to fetch video");
+
+    const data = await response.json();
+
+    const video = data.formats
+      .filter(f => f.vcodec !== "none" && f.ext === "mp4")
+      .sort((a,b) => (b.height||0) - (a.height||0))[0];
+
+    const audio = data.formats
+      .filter(f => f.acodec !== "none" && (f.ext==='m4a'||f.ext==='mp4'))
+      .sort((a,b) => b.filesize - a.filesize)[0];
+
+    if (!video || !audio) return null;
+
+    // Store preloaded data
+    preloadedData = { video, audio };
+
+    // Preload using hidden video/audio elements
+    const hiddenVideo = document.createElement("video");
+    hiddenVideo.src = video.url;
+    hiddenVideo.preload = "auto";
+    hiddenVideo.style.display = "none";
+    document.body.appendChild(hiddenVideo);
+
+    const hiddenAudio = document.createElement("audio");
+    hiddenAudio.src = audio.url;
+    hiddenAudio.preload = "auto";
+    hiddenAudio.style.display = "none";
+    document.body.appendChild(hiddenAudio);
+
+    return preloadedData;
+  } catch {
+    return null;
+  }
+}
+
+// Preview video and audio
+async function previewVideo() {
+  const url = document.getElementById("videoUrl").value.trim();
+  if (!url) { alert("Please paste a Facebook video URL!"); return; }
+
+  document.getElementById("loader").style.display = "block";
+
+  // Preload if not already done or if URL changed
+  if (!preloadedData || preloadedData.inputUrl !== url) {
+    preloadedData = await preloadVideo(url);
+    if (!preloadedData) {
+      document.getElementById("result").innerHTML = `<p style="color:red;">Failed to load video/audio</p>`;
+      document.getElementById("loader").style.display = "none";
+      return;
+    }
+    preloadedData.inputUrl = url;
+  }
+
+  document.getElementById("loader").style.display = "none";
+  document.getElementById("result").innerHTML = `
+    <video controls preload="auto" playsinline src="${preloadedData.video.url}"></video>
+    <h4>Audio Only</h4>
+    <audio controls preload="auto" src="${preloadedData.audio.url}"></audio>
+  `;
+}
+</script>
+
+
+
+
 
 
 		
